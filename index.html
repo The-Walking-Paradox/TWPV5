@@ -2473,6 +2473,9 @@ min-height:48px;}
   <div class="tool-tab" id="tn-watermark" onclick="switchTool('watermark')">
     <div class="tt-icon">💧</div><div class="tt-name">Mark</div>
   </div>
+  <div class="tool-tab" id="tn-script" onclick="switchTool('script')">
+    <div class="tt-icon">🎬</div><div class="tt-name">Script</div>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════════
@@ -6193,11 +6196,11 @@ function qInit(){qFitCv();buildBgRow('qBgRow','himalaya',id=>{qS.bg=id;qRender(0
 // TOOL SWITCHER
 // ═══════════════════════════════════════════════════
 let activeTool='news';
-const TOOL_BARS={news:['nBarMob','nBarDesk'],top10:['vBarMob','vBarDesk'],quiz:['qBarMob','qBarDesk'],intro:['iBarMob','iBarDesk'],quote:['quoteBars','quoteBarsDesk'],dyk:['dykBarMob','dykBarDesk'],shloka:['shlokaBarMob','shlokaBarDesk'],compare:['compareBarMob','compareBarDesk'],paradox:['paradoxBarMob','paradoxBarDesk'],poll:['pollBarMob','pollBarDesk'],hook:['hookBarMob','hookBarDesk'],caption:['captionBarMob','captionBarDesk'],carousel:['carBarMob'],react:['reactBarMob'],watermark:['wmBarMob']};
-let _iInited=false,_vInited=false,_qInited=false,_qcInited=false,_dykInited=false,_slInited=false,_cmpInited=false,_pdxInited=false,_pollInited=false,_hookInited=false,_capInited=false,_carInited=false,_reactInited=false,_wmInited=false;
+const TOOL_BARS={news:['nBarMob','nBarDesk'],top10:['vBarMob','vBarDesk'],quiz:['qBarMob','qBarDesk'],intro:['iBarMob','iBarDesk'],quote:['quoteBars','quoteBarsDesk'],dyk:['dykBarMob','dykBarDesk'],shloka:['shlokaBarMob','shlokaBarDesk'],compare:['compareBarMob','compareBarDesk'],paradox:['paradoxBarMob','paradoxBarDesk'],poll:['pollBarMob','pollBarDesk'],hook:['hookBarMob','hookBarDesk'],caption:['captionBarMob','captionBarDesk'],carousel:['carBarMob'],react:['reactBarMob'],watermark:['wmBarMob'],script:['scriptBarMob']};
+let _iInited=false,_vInited=false,_qInited=false,_qcInited=false,_dykInited=false,_slInited=false,_cmpInited=false,_pdxInited=false,_pollInited=false,_hookInited=false,_capInited=false,_carInited=false,_reactInited=false,_wmInited=false,_scriptInited=false;
 function switchTool(tool){
   activeTool=tool;
-  ['news','top10','quiz','intro','quote','dyk','shloka','compare','paradox','poll','hook','caption','carousel','react','watermark'].forEach(t=>{
+  ['news','top10','quiz','intro','quote','dyk','shloka','compare','paradox','poll','hook','caption','carousel','react','watermark','script'].forEach(t=>{
     document.getElementById('ts-'+t).classList.toggle('on',t===tool);
     document.getElementById('tn-'+t).classList.toggle('on',t===tool);
   });
@@ -6216,6 +6219,7 @@ function switchTool(tool){
   if(tool==='carousel' &&!_carInited)   {_carInited=true;   setTimeout(function(){CAROUSEL.init();},60);}
   if(tool==='react'      &&!_reactInited){_reactInited=true; setTimeout(function(){REACT.init();},60);}
   if(tool==='watermark' &&!_wmInited)   {_wmInited=true;    setTimeout(function(){WATERMARK.init();},60);}
+  if(tool==='script'    &&!_scriptInited){_scriptInited=true; setTimeout(function(){SCRIPT.init();},60);}
   // Action bars — hide all, show active
   Object.values(TOOL_BARS).forEach(bars=>bars.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';}));
   checkLayout();
@@ -6727,6 +6731,278 @@ function exitFullscreen(){
 
 
 
+
+// ═══════════════════════════════════════════════════════════════
+//  AI PROMPT LIBRARY + UNIVERSAL SMART PARSE
+//  Copy prompt → paste in any LLM → paste result back → auto-fills
+// ═══════════════════════════════════════════════════════════════
+var AI_PROMPTS = {
+  news: {
+    label: 'News Card',
+    prompt: 'You are a content researcher for "The Walking Paradox" — a Nepali news page.\n\nWrite ONE news card about: [YOUR TOPIC HERE]\n\nRules:\n- Factual, verified, recent (today is ' + new Date().toDateString() + ')\n- Mixed Nepali/English natural style\n- Headline: max 10 words, punchy\n- Body: 2-3 sentences, key facts with numbers\n\nOUTPUT EXACTLY THIS FORMAT (no extra text):\nHEADLINE: <headline here>\nBODY: <body here>\nCATEGORY: <one of: Politics/Economy/Society/Sports/World>',
+    parse: function(text){
+      var h = (text.match(/HEADLINE:\s*(.+)/i)||[])[1];
+      var b = (text.match(/BODY:\s*([\s\S]+?)(?=\nCATEGORY:|$)/i)||[])[1];
+      if(!h && !b) return 'Could not find HEADLINE: or BODY: lines';
+      var el;
+      if(h && (el=document.getElementById('nHl1'))) { el.value=h.trim(); el.dispatchEvent(new Event('input')); }
+      if(b && (el=document.getElementById('nBodyText'))) { el.value=b.trim(); el.dispatchEvent(new Event('input')); }
+      return null;
+    }
+  },
+  quote: {
+    label: 'Quote Card',
+    prompt: 'Give me ONE powerful quote for a Nepali audience about: [YOUR TOPIC HERE]\n\nCan be from philosophy, Gita, famous thinkers, or original. Nepali or English.\n\nOUTPUT EXACTLY THIS FORMAT:\nQUOTE: <the quote>\nAUTHOR: <who said it, or "The Walking Paradox" if original>',
+    parse: function(text){
+      var q = (text.match(/QUOTE:\s*([\s\S]+?)(?=\nAUTHOR:|$)/i)||[])[1];
+      var a = (text.match(/AUTHOR:\s*(.+)/i)||[])[1];
+      if(!q) return 'Could not find QUOTE: line';
+      var el;
+      if(q && (el=document.getElementById('qcQuote'))) { el.value=q.trim(); el.dispatchEvent(new Event('input')); }
+      if(a && (el=document.getElementById('qcAuthor'))) { el.value=a.trim(); el.dispatchEvent(new Event('input')); }
+      return null;
+    }
+  },
+  dyk: {
+    label: 'Did You Know',
+    prompt: 'You are a researcher for a Nepali facts page.\n\nGive me 3-4 surprising verified facts about: [YOUR TOPIC HERE]\n\nRules:\n- Each fact must be true and verifiable\n- Surprising — "I did not know that!" reaction\n- Mixed Nepali/English, short (1-2 sentences each)\n- Include numbers where possible\n\nOUTPUT EXACTLY THIS FORMAT:\nTITLE: <series title>\nFACT: <fact 1>\nFACT: <fact 2>\nFACT: <fact 3>',
+    parse: function(text){
+      var t = (text.match(/TITLE:\s*(.+)/i)||[])[1];
+      var facts = [];
+      var re = /FACT:\s*(.+)/gi, m;
+      while((m=re.exec(text))) facts.push(m[1].trim());
+      if(!facts.length) return 'Could not find FACT: lines';
+      try{
+        if(t) DYK.state.title = t.trim();
+        DYK.state.facts = facts;
+        if(typeof DYK.buildFacts==='function') DYK.buildFacts();
+        DYK.render(0);
+      }catch(e){ return 'DYK not ready — tap the DYK tab first, then retry'; }
+      return null;
+    }
+  },
+  compare: {
+    label: 'Comparison Card',
+    prompt: 'Create a comparison for a Nepali audience: [YOUR TOPIC, e.g. "Nepal vs India internet speed"]\n\nRules: verified recent data with numbers.\n\nOUTPUT EXACTLY THIS FORMAT:\nTITLE: <comparison title>\nLEFT_LABEL: <left side name>\nLEFT_FACT: <left description>\nLEFT_STAT: <left number+unit>\nRIGHT_LABEL: <right side name>\nRIGHT_FACT: <right description>\nRIGHT_STAT: <right number+unit>\nCONTEXT: <one line of context>',
+    parse: function(text){
+      var get = function(key){ return (text.match(new RegExp(key+':\\s*(.+)','i'))||[])[1]; };
+      var pairs = [['TITLE','cmpTitle'],['LEFT_LABEL','cmpLeftLabel'],['LEFT_FACT','cmpLeftFact'],['LEFT_STAT','cmpLeftStat'],['RIGHT_LABEL','cmpRightLabel'],['RIGHT_FACT','cmpRightFact'],['RIGHT_STAT','cmpRightStat'],['CONTEXT','cmpContext']];
+      var found = 0;
+      pairs.forEach(function(p){
+        var v = get(p[0]);
+        var el = document.getElementById(p[1]);
+        if(v && el){ el.value=v.trim(); el.dispatchEvent(new Event('input')); found++; }
+      });
+      return found ? null : 'Could not find TITLE:/LEFT_LABEL: format';
+    }
+  },
+  poll: {
+    label: 'Poll Card',
+    prompt: 'Create an engaging poll question for Nepali social media about: [YOUR TOPIC HERE]\n\nRules: provocative enough to drive comments, but respectful. Mixed Nepali/English.\n\nOUTPUT EXACTLY THIS FORMAT:\nQUESTION: <poll question>\nOPTION_A: <first option>\nOPTION_B: <second option>\nCTA: <call to action, e.g. "Comment मा आफ्नो choice लेख्नुस्">',
+    parse: function(text){
+      var get = function(key){ return (text.match(new RegExp(key+':\\s*(.+)','i'))||[])[1]; };
+      var pairs = [['QUESTION','pollQuestion'],['OPTION_A','pollA'],['OPTION_B','pollB'],['CTA','pollCta']];
+      var found = 0;
+      pairs.forEach(function(p){
+        var v = get(p[0]);
+        var el = document.getElementById(p[1]);
+        if(v && el){ el.value=v.trim(); el.dispatchEvent(new Event('input')); found++; }
+      });
+      return found ? null : 'Could not find QUESTION:/OPTION_A: format';
+    }
+  },
+  hook: {
+    label: 'Hook Card',
+    prompt: 'Write a scroll-stopping hook for a Nepali social video about: [YOUR TOPIC HERE]\n\nRules: max 12 words, creates curiosity gap, mixed Nepali/English OK.\n\nOUTPUT EXACTLY THIS FORMAT:\nHOOK: <the hook line>\nSUB: <smaller supporting line, optional>',
+    parse: function(text){
+      var h = (text.match(/HOOK:\s*(.+)/i)||[])[1];
+      var s = (text.match(/SUB:\s*(.+)/i)||[])[1];
+      if(!h) return 'Could not find HOOK: line';
+      var el;
+      if(h && (el=document.getElementById('hookText'))) { el.value=h.trim(); el.dispatchEvent(new Event('input')); }
+      if(s && (el=document.getElementById('hookSub'))) { el.value=s.trim(); el.dispatchEvent(new Event('input')); }
+      return null;
+    }
+  },
+  carousel: {
+    label: 'Swipe Carousel',
+    prompt: 'Create a swipeable carousel for Nepali social media about: [YOUR TOPIC HERE]\n\nRules:\n- 5-6 slides, first slide is a title/hook, last slide asks a question\n- Each slide: short headline + 1-2 sentence body\n- Mixed Nepali/English\n- Verified facts only (today is ' + new Date().toDateString() + ')\n\nOUTPUT EXACTLY THIS FORMAT (one SLIDE line per slide):\nSLIDE: <headline> | <body text> | <small label>\nSLIDE: <headline> | <body text> | <small label>',
+    parse: function(text){
+      var slides = [];
+      var re = /SLIDE:\s*(.+)/gi, m;
+      while((m=re.exec(text))){
+        var parts = m[1].split('|').map(function(p){return p.trim();});
+        slides.push({ headline:parts[0]||'', body:parts[1]||'', label:parts[2]||'' });
+      }
+      if(!slides.length) return 'Could not find SLIDE: lines';
+      try{
+        CAROUSEL.state.slides = slides;
+        CAROUSEL.state.current = 0;
+        CAROUSEL.init();
+      }catch(e){ return 'Carousel not ready — tap the Swipe tab first, then retry'; }
+      return null;
+    }
+  },
+  react: {
+    label: 'Reaction Card',
+    prompt: 'Write a balanced two-sided analysis for a Nepali duet/reaction video about: [YOUR TOPIC HERE]\n\nRules:\n- Start positive side with "सकारात्मक पाटो" and challenge side with "चुनौतीपूर्ण पाटो"\n- 2-4 sentences per side\n- End with an engagement question\n\nOUTPUT EXACTLY THIS FORMAT:\nTOPIC: <short topic tag>\nBODY: <full analysis with both sides, use line breaks>\nQUESTION: <engagement question for comments>',
+    parse: function(text){
+      var t = (text.match(/TOPIC:\s*(.+)/i)||[])[1];
+      var b = (text.match(/BODY:\s*([\s\S]+?)(?=\nQUESTION:|$)/i)||[])[1];
+      var q = (text.match(/QUESTION:\s*(.+)/i)||[])[1];
+      if(!b) return 'Could not find BODY: section';
+      var el;
+      if(t && (el=document.getElementById('reactTopic'))) el.value=t.trim();
+      if(b && (el=document.getElementById('reactBody'))) el.value=b.trim();
+      if(q && (el=document.getElementById('reactQuestion'))) el.value=q.trim();
+      try{ REACT.update(); }catch(e){}
+      return null;
+    }
+  },
+  script: {
+    label: 'Script Video',
+    prompt: 'Write a short-form video script for a Nepali audience about: [YOUR TOPIC HERE]\n\nRules:\n- 6-10 short punchy sentences, each becomes one animated scene\n- First sentence is a HOOK that creates curiosity\n- Build up, then payoff\n- Mixed Nepali/English natural style\n- Each sentence on its own line\n- No emojis, no headers, no numbering — just the sentences\n\nOUTPUT: only the script sentences, one per line.',
+    parse: function(text){
+      var el = document.getElementById('scriptInput');
+      if(!el) return 'Script tab not ready — tap the Script tab first';
+      el.value = text.trim();
+      try{ SCRIPT.split(); }catch(e){}
+      return null;
+    }
+  },
+  top10: {
+    label: 'Top 10 Video',
+    prompt: 'You are a content researcher for "The Walking Paradox" — a Nepali Top 10 video page.\n\nCreate a Top 10 list about: [YOUR TOPIC HERE]\n\nRules:\n- All numbers verified and recent (today is ' + new Date().toDateString() + ')\n- Order: item 1 = #10 (least), item 10 = #1 (most impressive) — video builds to climax\n- Name short, stat is the number only, unit is what the number measures\n\nOUTPUT EXACTLY THIS FORMAT (no extra text, no sources in the lines):\nTITLE: <video title>\n1. <Name> | <Number> | <Unit>\n2. <Name> | <Number> | <Unit>\n3. <Name> | <Number> | <Unit>\n4. <Name> | <Number> | <Unit>\n5. <Name> | <Number> | <Unit>\n6. <Name> | <Number> | <Unit>\n7. <Name> | <Number> | <Unit>\n8. <Name> | <Number> | <Unit>\n9. <Name> | <Number> | <Unit>\n10. <Name> | <Number> | <Unit>',
+    parse: function(text){
+      var t = (text.match(/TITLE:\s*(.+)/i)||[])[1];
+      var items = [];
+      var re = /^\s*\d+[\.\)]\s*(.+)$/gm, m;
+      while((m=re.exec(text))){
+        var parts = m[1].split('|').map(function(p){return p.trim();});
+        if(parts[0]) items.push({ name:parts[0], stat:parts[1]||'', unit:parts[2]||'' });
+      }
+      if(!items.length) return 'Could not find numbered lines like "1. Name | Number | Unit"';
+      try{
+        if(t){ vS.listTitle = t.trim(); var te=document.getElementById('vListTitle'); if(te) te.value=t.trim(); }
+        // Fill up to 10 items
+        vS.items = items.slice(0,10);
+        while(vS.items.length<10) vS.items.push({name:'',stat:'',unit:''});
+        vBuildItems();
+        vRender(0);
+      }catch(e){ return 'Top 10 not ready — tap the Top 10 tab first, then retry'; }
+      return null;
+    }
+  },
+  quiz: {
+    label: 'Quiz Video',
+    prompt: 'You are a quiz creator for "The Walking Paradox" — a Nepali quiz video page.\n\nCreate 5 quiz questions about: [YOUR TOPIC HERE]\n\nRules:\n- Each question has exactly ONE correct answer, marked with *\n- All 4 options plausible — not obviously wrong\n- Surprising/counterintuitive answers preferred ("I did not know that!")\n- Verified facts only (today is ' + new Date().toDateString() + ')\n- Mixed Nepali/English OK\n\nOUTPUT EXACTLY THIS FORMAT (repeat the block 5 times):\nQUIZ_TITLE: <series title>\nQ: <question 1>\nA) <option>\nB) <option> *\nC) <option>\nD) <option>\nQ: <question 2>\nA) <option> *\nB) <option>\nC) <option>\nD) <option>',
+    parse: function(text){
+      var t = (text.match(/QUIZ_TITLE:\s*(.+)/i)||[])[1];
+      // Split into question blocks
+      var blocks = text.split(/\nQ:\s*/);
+      var questions = [];
+      for(var b=1; b<blocks.length; b++){
+        var blk = blocks[b];
+        var qline = blk.split('\n')[0].trim();
+        var opts = [], correct = 0;
+        var ore = /^([A-D])\)\s*(.+)$/gm, om;
+        while((om=ore.exec(blk))){
+          var optText = om[2].trim();
+          var isCorrect = /\*\s*$/.test(optText);
+          if(isCorrect) optText = optText.replace(/\s*\*\s*$/,'').trim();
+          var oi = 'ABCD'.indexOf(om[1]);
+          opts[oi] = optText;
+          if(isCorrect) correct = oi;
+        }
+        if(qline && opts.filter(Boolean).length>=2){
+          questions.push({ q:qline, opts:[opts[0]||'',opts[1]||'',opts[2]||'',opts[3]||''], correct:correct, timer:5 });
+        }
+      }
+      if(!questions.length) return 'Could not find Q:/A)/B) blocks — check the format';
+      try{
+        if(t){ qS.quizTitle = t.trim(); var te=document.getElementById('qQuizTitle'); if(te) te.value=t.trim(); }
+        qS.questions = questions.slice(0,8);
+        qBuildList();
+        qRender(0);
+      }catch(e){ return 'Quiz not ready — tap the Quiz tab first, then retry'; }
+      return null;
+    }
+  },
+};
+
+var _aiActiveTool = null;
+
+function copyAiPrompt(tool){
+  var cfg = AI_PROMPTS[tool];
+  if(!cfg) return;
+  var doCopy = function(txt){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(function(){
+        setToast('📋 Prompt copied! Paste in ChatGPT/Gemini, replace [YOUR TOPIC HERE], then bring the answer back.');
+      }).catch(function(){ fallbackCopy(txt); });
+    } else fallbackCopy(txt);
+  };
+  var fallbackCopy = function(txt){
+    var ta = document.createElement('textarea');
+    ta.value = txt; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    setToast('📋 Prompt copied!');
+  };
+  doCopy(cfg.prompt);
+}
+window.copyAiPrompt = copyAiPrompt;
+
+function openAiPaste(tool){
+  var cfg = AI_PROMPTS[tool];
+  if(!cfg) return;
+  _aiActiveTool = tool;
+  var ov = document.getElementById('aiPasteOverlay');
+  document.getElementById('aiPasteTitle').textContent = '📥 Paste AI result — ' + cfg.label;
+  document.getElementById('aiPasteInput').value = '';
+  document.getElementById('aiPasteErr').textContent = '';
+  ov.style.display = 'flex';
+}
+window.openAiPaste = openAiPaste;
+
+function closeAiPaste(){
+  document.getElementById('aiPasteOverlay').style.display = 'none';
+}
+window.closeAiPaste = closeAiPaste;
+
+function runAiParse(){
+  var cfg = AI_PROMPTS[_aiActiveTool];
+  if(!cfg) return;
+  var text = document.getElementById('aiPasteInput').value;
+  if(!text.trim()){ document.getElementById('aiPasteErr').textContent = 'Paste the AI output first'; return; }
+  var err = cfg.parse(text);
+  if(err){
+    document.getElementById('aiPasteErr').textContent = '⚠️ ' + err;
+  } else {
+    closeAiPaste();
+    setToast('✅ Parsed! Fields filled — check the canvas.');
+  }
+}
+window.runAiParse = runAiParse;
+
+// Inject the AI buttons into each tool's sidebar at startup
+function injectAiButtons(){
+  Object.keys(AI_PROMPTS).forEach(function(tool){
+    var section = document.getElementById('ts-'+tool);
+    if(!section) return;
+    var inner = section.querySelector('.side-inner');
+    if(!inner) return;
+    if(inner.querySelector('.ai-row')) return; // already injected
+    var row = document.createElement('div');
+    row.className = 'ai-row';
+    row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px';
+    row.innerHTML =
+      '<button onclick="copyAiPrompt(\''+tool+'\')" style="padding:11px 6px;min-height:44px;border-radius:8px;background:rgba(232,201,106,.1);border:1.5px solid rgba(232,201,106,.35);color:var(--gd);font-family:\'DM Sans\',sans-serif;font-size:11px;font-weight:700;cursor:pointer">📋 Copy AI Prompt</button>'+
+      '<button onclick="openAiPaste(\''+tool+'\')" style="padding:11px 6px;min-height:44px;border-radius:8px;background:rgba(62,207,142,.08);border:1.5px solid rgba(62,207,142,.3);color:#3ecf8e;font-family:\'DM Sans\',sans-serif;font-size:11px;font-weight:700;cursor:pointer">📥 Paste Result</button>';
+    inner.insertBefore(row, inner.firstChild);
+  });
+}
+
 // ═══════════════════════════════════════════════════
 // CTA REMINDER — your views-to-followers fix
 // Reminds you to add follow CTA before posting
@@ -6895,6 +7171,7 @@ var _autosaveStates = function(){
   try{ if(typeof DYK!=='undefined'&&DYK.state) s.dyk = {title:DYK.state.title, facts:DYK.state.facts}; }catch(e){}
   try{ if(typeof CAROUSEL!=='undefined'&&CAROUSEL.state) s.carousel = {slides:CAROUSEL.state.slides}; }catch(e){}
   try{ if(typeof REACT!=='undefined'&&REACT.state) s.react = {topic:REACT.state.topic, body:REACT.state.body, question:REACT.state.question}; }catch(e){}
+  try{ if(typeof SCRIPT!=='undefined'&&SCRIPT.state&&SCRIPT.state.scenes.length) s.script = {scenes:SCRIPT.state.scenes, style:SCRIPT.state.style}; }catch(e){}
   return s;
 };
 
@@ -6932,6 +7209,7 @@ function restoreDrafts(){
     try{ if(s.dyk && typeof DYK!=='undefined' && DYK.state && s.dyk.facts && s.dyk.facts.some(function(f){return f&&(f.text||f);})){ DYK.state.title=s.dyk.title||DYK.state.title; DYK.state.facts=s.dyk.facts; restored.push('DYK'); } }catch(e){}
     try{ if(s.carousel && typeof CAROUSEL!=='undefined' && CAROUSEL.state && s.carousel.slides && s.carousel.slides.some(function(sl){return sl.headline||sl.body;})){ CAROUSEL.state.slides=s.carousel.slides; restored.push('Swipe'); } }catch(e){}
     try{ if(s.react && typeof REACT!=='undefined' && REACT.state && (s.react.body||s.react.topic)){ REACT.state.topic=s.react.topic||''; REACT.state.body=s.react.body||''; REACT.state.question=s.react.question||''; restored.push('React'); } }catch(e){}
+    try{ if(s.script && typeof SCRIPT!=='undefined' && SCRIPT.state && s.script.scenes && s.script.scenes.length){ SCRIPT.state.scenes=s.script.scenes; SCRIPT.state.style=s.script.style||'dark'; restored.push('Script'); } }catch(e){}
     if(restored.length){
       setToast('📝 Restored drafts: ' + restored.join(', '));
     }
@@ -6949,6 +7227,7 @@ async function init(){
   try{ await document.fonts.ready; }catch(e){}
   try{ nInit(); }catch(e){ console.error('[WP] nInit failed:',e); }
   try{ restoreDrafts(); }catch(e){}
+  try{ injectAiButtons(); }catch(e){}
   try{ switchTool('news'); }catch(e){ console.error('[WP] switchTool failed:',e); }
   window.addEventListener('resize', function(){
     try{ nFitCv();nRender(); }catch(e){}
@@ -9765,6 +10044,416 @@ var WATERMARK = (function(){
 
 })();
 
+
+// ═══════════════════════════════════════════════════════════════
+//  SCRIPT — SCRIPT TO VIDEO GENERATOR
+//  Paste long text → auto-split into scenes → animated video
+//  Timing auto-scales to text length. Outro CTA card included.
+// ═══════════════════════════════════════════════════════════════
+var SCRIPT = (function(){
+
+  var state = {
+    fmt:'story', style:'dark', speed:'normal',
+    scenes: [],          // array of strings
+    cta: true,
+    exportMethod:'mp4',
+    frame:0, playing:false, busy:false, raf:null,
+  };
+
+  var SPEED_MULT = { slow:1.35, normal:1.0, fast:0.72 };
+  var T_INTRO = 120;   // 2s brand intro
+  var T_OUTRO = 210;   // 3.5s CTA outro
+  var T_ENTER = 28;    // scene entrance frames
+  var T_EXIT  = 22;    // scene exit frames
+
+  var STYLES = {
+    dark:{
+      bg:function(g,W,H){
+        g.fillStyle='#08080f';g.fillRect(0,0,W,H);
+        var rg=g.createRadialGradient(W*.5,H*.45,0,W*.5,H*.45,W*.75);
+        rg.addColorStop(0,'rgba(232,201,106,.05)');rg.addColorStop(1,'rgba(0,0,0,0)');
+        g.fillStyle=rg;g.fillRect(0,0,W,H);
+      },
+      text:'#f5f0e8', accent:'#e8c96a', rule:'rgba(232,201,106,.3)',
+    },
+    crimson:{
+      bg:function(g,W,H){
+        g.fillStyle='#0c0205';g.fillRect(0,0,W,H);
+        var rg=g.createRadialGradient(W*.5,H*.4,0,W*.5,H*.4,W*.7);
+        rg.addColorStop(0,'rgba(201,51,74,.13)');rg.addColorStop(1,'rgba(0,0,0,0)');
+        g.fillStyle=rg;g.fillRect(0,0,W,H);
+      },
+      text:'#fff5f7', accent:'#c9334a', rule:'rgba(201,51,74,.4)',
+    },
+    gold:{
+      bg:function(g,W,H){
+        g.fillStyle='#0a0800';g.fillRect(0,0,W,H);
+        var rg=g.createRadialGradient(W*.5,H*.4,0,W*.5,H*.4,W*.65);
+        rg.addColorStop(0,'rgba(232,201,106,.11)');rg.addColorStop(1,'rgba(0,0,0,0)');
+        g.fillStyle=rg;g.fillRect(0,0,W,H);
+      },
+      text:'#fdf5e0', accent:'#e8c96a', rule:'rgba(232,201,106,.4)',
+    },
+    mountain:{
+      bg:function(g,W,H){
+        var gr=g.createLinearGradient(0,0,0,H);
+        gr.addColorStop(0,'#060d18');gr.addColorStop(1,'#04080f');
+        g.fillStyle=gr;g.fillRect(0,0,W,H);
+        if(typeof sharedDrawMtn==='function') sharedDrawMtn(g,W,H);
+      },
+      text:'#f0ece4', accent:'#e8c96a', rule:'rgba(232,201,106,.25)',
+    },
+  };
+
+  var cv,g2,W,H;
+
+  // ── SCENE TIMING ──
+  // Hold time scales with text length: ~4 frames per char, clamped
+  function sceneFrames(text){
+    var mult = SPEED_MULT[state.speed]||1;
+    var hold = Math.round(Math.min(Math.max(text.length*4, 100), 480) * mult);
+    return T_ENTER + hold + T_EXIT;
+  }
+
+  function totalFrames(){
+    var t = T_INTRO;
+    state.scenes.forEach(function(s){ t += sceneFrames(s); });
+    if(state.cta) t += T_OUTRO;
+    return Math.max(t, 60);
+  }
+
+  // ── SPLIT SCRIPT INTO SCENES ──
+  function splitText(text){
+    var scenes = [];
+    text.split(/\n+/).forEach(function(para){
+      para = para.trim();
+      if(!para) return;
+      // Split on । ! ? always; on '.' only when followed by space/end (protects 1.5, Rs.2 etc)
+      var parts = para.split(/(?<=[।!?])\s*|(?<=\.)\s+/);
+      parts.forEach(function(p){
+        p = (p||'').trim();
+        if(p) scenes.push(p);
+      });
+    });
+    return scenes;
+  }
+
+  function split(){
+    var input = document.getElementById('scriptInput');
+    if(!input || !input.value.trim()){
+      setToast('Paste your script first'); return;
+    }
+    var scenes;
+    try{
+      scenes = splitText(input.value);
+    }catch(e){
+      // Older Safari without lookbehind — simple fallback
+      scenes = input.value.split(/\n+|।|(?:\.\s+)|!|\?/).map(function(s){return (s||'').trim();}).filter(Boolean);
+    }
+    if(!scenes.length){ setToast('Could not split — check your text'); return; }
+    state.scenes = scenes;
+    buildSceneList();
+    document.getElementById('scriptScenesWrap').style.display='block';
+    render(0);
+    setToast('✂️ ' + scenes.length + ' scenes created — edit below if needed');
+  }
+
+  function buildSceneList(){
+    var el = document.getElementById('scriptSceneList');
+    if(!el) return;
+    el.innerHTML='';
+    state.scenes.forEach(function(text, i){
+      var row=document.createElement('div');
+      row.style.cssText='display:flex;gap:6px;align-items:flex-start';
+      var num=document.createElement('div');
+      num.style.cssText='width:24px;height:24px;border-radius:50%;background:var(--b2);color:var(--t2);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:8px';
+      num.textContent=i+1;
+      var ta=document.createElement('textarea');
+      ta.className='fi';
+      ta.rows=2;
+      ta.value=text;
+      ta.style.cssText='flex:1;margin-bottom:0;font-size:12px';
+      ta.oninput=(function(idx){return function(){state.scenes[idx]=this.value;updateDuration();};})(i);
+      var del=document.createElement('button');
+      del.style.cssText='background:none;border:none;color:var(--t3);font-size:15px;cursor:pointer;padding:8px 4px;flex-shrink:0;min-height:44px';
+      del.textContent='✕';
+      del.onclick=(function(idx){return function(){
+        state.scenes.splice(idx,1);
+        buildSceneList(); render(0);
+      };})(i);
+      row.appendChild(num);row.appendChild(ta);
+      if(state.scenes.length>1)row.appendChild(del);
+      el.appendChild(row);
+    });
+    var cnt=document.getElementById('scriptSceneCount');
+    if(cnt)cnt.textContent='('+state.scenes.length+')';
+    updateDuration();
+  }
+
+  function updateDuration(){
+    var el=document.getElementById('scriptDuration');
+    if(!el)return;
+    var sec=(totalFrames()/FPS).toFixed(0);
+    el.textContent='⏱ Estimated video: '+sec+' seconds';
+  }
+
+  function addScene(){
+    state.scenes.push('');
+    buildSceneList();
+  }
+
+  // ── RENDER ──
+  function getDims(){return {W:1080,H:1920};}
+
+  function fitCv(){
+    if(!cv)return;
+    var d=getDims();W=d.W;H=d.H;
+    var mxW=Math.max(cv.parentElement?cv.parentElement.clientWidth:280,280);
+    var mxH=Math.max(window.innerHeight*.44,300);
+    var ph=Math.min(mxH,520),pw=ph*(W/H);
+    if(pw>mxW){pw=mxW;ph=pw*(H/W);}
+    cv.style.width=pw+'px';cv.style.height=ph+'px';
+    cv.width=W;cv.height=H;
+  }
+
+  function render(frame){
+    if(!cv){init();}if(!cv||!g2)return;
+    WP.safeRender(function(){_draw(frame||0);},cv,'SCRIPT');
+  }
+
+  function _draw(frame){
+    fitCv();
+    var pal=STYLES[state.style]||STYLES.dark;
+    W=cv.width;H=cv.height;
+    var pp=pip(W);
+    var tot=totalFrames();
+    frame=Math.min(frame,tot-1);
+
+    // Background + pip every frame
+    pal.bg(g2,W,H);
+    g2.fillStyle='#c9334a';g2.fillRect(0,0,pp,H*.5);
+    g2.fillStyle='#4a7fc0';g2.fillRect(0,H*.5,pp,H*.5);
+
+    // ── INTRO ──
+    if(frame < T_INTRO){
+      var p=ease(Math.min(frame/(T_INTRO*.4),1));
+      var fadeOut=frame>T_INTRO*.8?1-ease((frame-T_INTRO*.8)/(T_INTRO*.2)):1;
+      g2.globalAlpha=p*fadeOut;
+      var bsz=Math.round(W*.034);
+      g2.font='700 '+bsz+'px "Cinzel",serif';
+      if('letterSpacing' in g2)g2.letterSpacing='4px';
+      g2.fillStyle=pal.accent;g2.textAlign='center';
+      g2.shadowColor='rgba(0,0,0,.9)';g2.shadowBlur=W*.02;
+      g2.fillText('THE WALKING PARADOX',W/2,H*.47);
+      g2.shadowBlur=0;
+      if('letterSpacing' in g2)g2.letterSpacing='0px';
+      var ruleW=W*.4*p;
+      g2.fillStyle=pal.rule;
+      g2.fillRect(W/2-ruleW/2,H*.5,ruleW,Math.max(2,W*.002));
+      g2.globalAlpha=1;
+      sharedDrawWatermark(g2,W,H);
+      return;
+    }
+
+    var fa=frame-T_INTRO;
+
+    // ── FIND CURRENT SCENE ──
+    var sceneIdx=-1, ff=0, acc=0;
+    for(var i=0;i<state.scenes.length;i++){
+      var sf=sceneFrames(state.scenes[i]);
+      if(fa<acc+sf){sceneIdx=i;ff=fa-acc;break;}
+      acc+=sf;
+    }
+
+    // ── OUTRO CTA ──
+    if(sceneIdx<0){
+      if(!state.cta){sharedDrawWatermark(g2,W,H);return;}
+      var of=fa-acc;
+      var op=ease(Math.min(of/30,1));
+      g2.globalAlpha=op;
+      // Follow CTA card
+      var csz=Math.round(W*.06);
+      g2.font='800 '+csz+'px "DM Sans",sans-serif';
+      g2.fillStyle=pal.text;g2.textAlign='center';
+      g2.shadowColor='rgba(0,0,0,.9)';g2.shadowBlur=W*.02;
+      g2.fillText('यस्तै content को लागि',W/2,H*.42);
+      g2.fillStyle=pal.accent;
+      g2.fillText('Follow गर्नुस् 👆',W/2,H*.42+csz*1.4);
+      g2.shadowBlur=0;
+      var hsz=Math.round(W*.028);
+      g2.font='600 '+hsz+'px "DM Sans",sans-serif';
+      g2.fillStyle='rgba(200,195,185,.7)';
+      g2.fillText('@walkingparadox',W/2,H*.42+csz*2.6);
+      g2.globalAlpha=1;
+      sharedDrawWatermark(g2,W,H);
+      return;
+    }
+
+    // ── SCENE ──
+    var text=state.scenes[sceneIdx]||'';
+    var sf2=sceneFrames(text);
+    var enterP=ease(Math.min(ff/T_ENTER,1));
+    var exitP=ff>sf2-T_EXIT?1-ease((ff-(sf2-T_EXIT))/T_EXIT):1;
+    var alpha=enterP*exitP;
+    var slideY=(1-enterP)*H*.025;
+
+    // Brand small at top
+    var bsz2=Math.round(W*.02);
+    g2.font='700 '+bsz2+'px "Cinzel",serif';
+    if('letterSpacing' in g2)g2.letterSpacing='3px';
+    g2.fillStyle='rgba(232,201,106,.6)';g2.textAlign='center';
+    g2.fillText('THE WALKING PARADOX',W/2,H*.06);
+    if('letterSpacing' in g2)g2.letterSpacing='0px';
+
+    // Auto font size based on text length
+    var len=text.length;
+    var tsz=len<50?Math.round(W*.062):len<110?Math.round(W*.052):len<200?Math.round(W*.044):Math.round(W*.037);
+    g2.font='700 '+tsz+'px "DM Sans",sans-serif';
+    var contentW=W*.82-pp;
+    var lines=sharedWrap(g2,text,contentW,14);
+    // Shrink if overflows
+    var safety=0;
+    while(lines.length*tsz*1.5 > H*.55 && tsz>24 && safety<6){
+      tsz=Math.round(tsz*.88);
+      g2.font='700 '+tsz+'px "DM Sans",sans-serif';
+      lines=sharedWrap(g2,text,contentW,16);
+      safety++;
+    }
+
+    var lineH=tsz*1.5;
+    var blockH=lines.length*lineH;
+    var startY=H*.5-blockH/2+tsz*.5+slideY;
+
+    g2.globalAlpha=alpha;
+    g2.textAlign='center';
+    g2.shadowColor='rgba(0,0,0,.85)';g2.shadowBlur=W*.018;
+    g2.fillStyle=pal.text;
+    lines.forEach(function(l,i){
+      g2.fillText(l,W/2+pp/2,startY+i*lineH);
+    });
+    g2.shadowBlur=0;
+
+    // Accent rule under text
+    var ruleW2=W*.22*enterP;
+    g2.fillStyle=pal.accent;
+    g2.fillRect(W/2-ruleW2/2,startY+blockH+tsz*.3,ruleW2,Math.max(2,W*.0025));
+    g2.globalAlpha=1;
+
+    // Scene progress dots at bottom
+    var total2=state.scenes.length;
+    var dotR=Math.round(W*.008);
+    var dotGap=dotR*3.4;
+    var dotsW=(total2-1)*dotGap;
+    var dx0=W/2-dotsW/2;
+    for(var d=0;d<total2;d++){
+      g2.beginPath();
+      g2.arc(dx0+d*dotGap,H*.88,dotR*(d===sceneIdx?1.5:1),0,Math.PI*2);
+      g2.fillStyle=d===sceneIdx?pal.accent:'rgba(255,255,255,.22)';
+      g2.fill();
+    }
+
+    sharedDrawWatermark(g2,W,H);
+  }
+
+  // ── PREVIEW ──
+  function preview(){
+    if(state.busy)return;
+    if(!state.scenes.length){setToast('Split your script first');return;}
+    state.playing=true;state.frame=0;
+    cancelAnimationFrame(state.raf);
+    var statusEl=document.getElementById('scriptStatus');
+    if(statusEl)statusEl.textContent='▶ Playing preview...';
+    var last=0;
+    function loop(ts){
+      if(!state.playing)return;
+      if(ts-last>=1000/FPS){
+        last=ts;
+        render(state.frame);
+        var pr=document.getElementById('scriptProg');
+        if(pr)pr.style.width=(state.frame/totalFrames()*100)+'%';
+        state.frame++;
+        if(state.frame>=totalFrames()){
+          state.playing=false;state.frame=0;
+          if(pr)pr.style.width='0%';
+          render(0);
+          if(statusEl)statusEl.innerHTML='✅ Preview done. Tap <strong style="color:var(--green)">⬇ Export</strong>.';
+          return;
+        }
+      }
+      state.raf=requestAnimationFrame(loop);
+    }
+    state.raf=requestAnimationFrame(loop);
+  }
+
+  // ── EXPORT ──
+  async function doExport(){
+    if(state.busy)return;
+    if(!state.scenes.length){setToast('Split your script first');return;}
+    state.playing=false;cancelAnimationFrame(state.raf);
+    if(state.exportMethod==='png'){
+      render(T_INTRO+10);
+      cv.toBlob(function(b){dlBlob(b,'walkingparadox-script-frame.png');},'image/png');
+      return;
+    }
+    if(state.exportMethod==='mp4')
+      await doMp4Export(cv,function(f){_draw(f);},totalFrames,'script','scriptProg','scriptProgLbl','scriptStatus',setBusy);
+    else if(state.exportMethod==='webm')
+      await doWebmExport(cv,function(f){_draw(f);},totalFrames,'script','scriptProg','scriptProgLbl','scriptStatus',setBusy);
+    else
+      await doZipExport(cv,function(f){_draw(f);},totalFrames,'script','scriptProg','scriptProgLbl','scriptStatus',setBusy);
+  }
+
+  function setBusy(b){state.busy=b;}
+
+  // ── SETTERS ──
+  function setStyle(s){
+    state.style=s;
+    ['Dark','Crimson','Gold','Mtn'].forEach(function(k){
+      var el=document.getElementById('scriptStyle'+k);
+      if(el)el.classList.toggle('on',k.toLowerCase()===s||(k==='Mtn'&&s==='mountain'));
+    });
+    render(state.frame||0);
+  }
+
+  function setSpeed(s){
+    state.speed=s;
+    ['Slow','Normal','Fast'].forEach(function(k){
+      var el=document.getElementById('scriptSpd'+k);
+      if(el)el.classList.toggle('on',k.toLowerCase()===s);
+    });
+    updateDuration();
+  }
+
+  function setCta(on){
+    state.cta=on;
+    document.getElementById('scriptCtaOn').classList.toggle('on',on);
+    document.getElementById('scriptCtaOff').classList.toggle('on',!on);
+    updateDuration();
+  }
+
+  function init(){
+    cv=document.getElementById('scriptCv');
+    if(!cv){WP.log('error','SCRIPT: canvas not found');return;}
+    g2=cv.getContext('2d');
+    fitCv();
+    buildExpPanel('scriptExpPanel',function(){return state.exportMethod;},function(id){state.exportMethod=id;},function(){render(state.frame||0);});
+    if(state.scenes.length){buildSceneList();document.getElementById('scriptScenesWrap').style.display='block';}
+    render(0);
+    WP.log('info','SCRIPT initialized');
+  }
+
+  function resize(){if(cv){fitCv();render(state.frame||0);}}
+
+  return {
+    init:init, resize:resize, render:render,
+    split:split, addScene:addScene,
+    setStyle:setStyle, setSpeed:setSpeed, setCta:setCta,
+    preview:preview, export:doExport,
+    state:state,
+  };
+
+})();
+
 // ── EXPOSE TO WINDOW ──
 if(typeof cancelSrOverlay !== 'undefined') window.cancelSrOverlay = cancelSrOverlay;
 if(typeof closeSaveOverlay !== 'undefined') window.closeSaveOverlay = closeSaveOverlay;
@@ -9835,6 +10524,7 @@ if(typeof REEL !== 'undefined') window.REEL = REEL;
 if(typeof CAROUSEL !== 'undefined') window.CAROUSEL = CAROUSEL;
 if(typeof REACT !== 'undefined') window.REACT = REACT;
 if(typeof WATERMARK !== 'undefined') window.WATERMARK = WATERMARK;
+if(typeof SCRIPT !== 'undefined') window.SCRIPT = SCRIPT;
 if(typeof QC !== 'undefined') window.QC = QC;
 if(typeof DYK !== 'undefined') window.DYK = DYK;
 if(typeof SHLOKA !== 'undefined') window.SHLOKA = SHLOKA;
@@ -9847,6 +10537,7 @@ if(typeof REEL !== 'undefined') window.REEL = REEL;
 if(typeof CAROUSEL !== 'undefined') window.CAROUSEL = CAROUSEL;
 if(typeof REACT !== 'undefined') window.REACT = REACT;
 if(typeof WATERMARK !== 'undefined') window.WATERMARK = WATERMARK;
+if(typeof SCRIPT !== 'undefined') window.SCRIPT = SCRIPT;
 
 
 } catch(startupErr) {
@@ -10118,6 +10809,86 @@ if(typeof WATERMARK !== 'undefined') window.WATERMARK = WATERMARK;
     <div class="canvas-wrap"><canvas id="wmCv"></canvas></div>
     <div class="act-bar" id="wmBarMob">
       <button class="abtn gold-btn" onclick="WATERMARK.download()">⬇ Save Watermark PNG</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCRIPT — SCRIPT TO VIDEO GENERATOR
+     Paste long text → auto-split scenes → animated MP4
+══════════════════════════════════════════ -->
+<div class="tool-section" id="ts-script">
+  <div class="side-panel">
+    <div class="side-inner">
+
+      <div>
+        <div class="sec-lbl">Your Script</div>
+        <textarea class="fi" id="scriptInput" rows="7"
+          placeholder="Paste your full script here — Nepali, English or mixed. Any length. New line or । . ! ? ends a scene."></textarea>
+        <button onclick="SCRIPT.split()" style="width:100%;padding:13px;min-height:48px;background:var(--gd);border:none;color:var(--inv);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-top:4px">✂️ Split into Scenes</button>
+      </div>
+
+      <div id="scriptScenesWrap" style="display:none">
+        <div class="sec-lbl">Scenes <span id="scriptSceneCount" style="color:var(--t2);font-size:9px;letter-spacing:0;text-transform:none;font-weight:400"></span></div>
+        <div id="scriptSceneList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px"></div>
+        <button onclick="SCRIPT.addScene()" style="width:100%;padding:11px;min-height:44px;background:var(--lift);border:1.5px dashed var(--b2);color:var(--gd);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer">+ Add Scene</button>
+        <div id="scriptDuration" style="font-size:10px;color:var(--t3);text-align:center;margin-top:8px"></div>
+      </div>
+
+      <div>
+        <div class="sec-lbl">Style</div>
+        <div class="grid2">
+          <button class="chip-btn on" id="scriptStyleDark"    onclick="SCRIPT.setStyle('dark')">Dark</button>
+          <button class="chip-btn"    id="scriptStyleCrimson" onclick="SCRIPT.setStyle('crimson')">Crimson</button>
+          <button class="chip-btn"    id="scriptStyleGold"    onclick="SCRIPT.setStyle('gold')">Gold</button>
+          <button class="chip-btn"    id="scriptStyleMtn"     onclick="SCRIPT.setStyle('mountain')">Mountain</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="sec-lbl">Speed</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+          <button class="chip-btn"    id="scriptSpdSlow"   onclick="SCRIPT.setSpeed('slow')">🐢 Slow</button>
+          <button class="chip-btn on" id="scriptSpdNormal" onclick="SCRIPT.setSpeed('normal')">Normal</button>
+          <button class="chip-btn"    id="scriptSpdFast"   onclick="SCRIPT.setSpeed('fast')">⚡ Fast</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="sec-lbl">Outro CTA <span style="color:var(--t3);font-size:9px;font-weight:400;text-transform:none;letter-spacing:0">(auto follow card at end)</span></div>
+        <div class="grid2">
+          <button class="chip-btn on" id="scriptCtaOn"  onclick="SCRIPT.setCta(true)">✅ On</button>
+          <button class="chip-btn"    id="scriptCtaOff" onclick="SCRIPT.setCta(false)">Off</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="main-area">
+    <div class="canvas-wrap"><canvas id="scriptCv"></canvas></div>
+    <div class="prog-wrap">
+      <div class="prog-bar"><div class="prog-fill" id="scriptProg"></div></div>
+      <div class="prog-lbl" id="scriptProgLbl"></div>
+    </div>
+    <div class="status-box" id="scriptStatus">Paste your script, tap <strong style="color:var(--gold)">✂️ Split into Scenes</strong>, then Preview or Export.</div>
+    <div class="exp-panel" id="scriptExpPanel"></div>
+    <div class="act-bar" id="scriptBarMob">
+      <button class="abtn prev-btn" onclick="SCRIPT.preview()">▶ Preview</button>
+      <button class="abtn gold-btn" onclick="SCRIPT.export()">⬇ Export</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI PASTE OVERLAY -->
+<div id="aiPasteOverlay" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.75);align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--card,#16172a);border:1.5px solid rgba(232,201,106,.3);border-radius:14px;padding:18px;max-width:480px;width:100%">
+    <div id="aiPasteTitle" style="font-size:14px;font-weight:700;color:var(--gd,#e8c96a);margin-bottom:10px;font-family:'DM Sans',sans-serif">📥 Paste AI result</div>
+    <textarea id="aiPasteInput" rows="8" style="width:100%;background:rgba(0,0,0,.3);border:1.5px solid rgba(255,255,255,.12);border-radius:9px;color:#f5f0e8;font-family:'DM Sans',sans-serif;font-size:13px;padding:10px;box-sizing:border-box" placeholder="Paste the full answer from ChatGPT / Gemini / Claude here..."></textarea>
+    <div id="aiPasteErr" style="color:#c9334a;font-size:11px;min-height:16px;margin-top:6px;font-family:'DM Sans',sans-serif"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <button onclick="closeAiPaste()" style="padding:13px;min-height:48px;border-radius:9px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.15);color:#a09b8e;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer">Cancel</button>
+      <button onclick="runAiParse()" style="padding:13px;min-height:48px;border-radius:9px;background:var(--gd,#e8c96a);border:none;color:#0c0d15;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer">✨ Parse & Fill</button>
     </div>
   </div>
 </div>
